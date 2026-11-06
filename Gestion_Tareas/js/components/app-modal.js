@@ -1,3 +1,5 @@
+//DECISIÓN: se usa <dialog> con un ShowModal(); la trampa de foco con Tab se hace a mano.
+
 import { getDeepActiveElement } from '../utils/utils.js';
 
 const plantilla = document.createElement('template');
@@ -130,7 +132,7 @@ export class AppModal extends HTMLElement {
       });
     });
 
-    return lista;
+    return lista.filter((el) => el.getClientRects().length > 0); //Así el Tab no se confunde con botones Ocutlos.
   }
 
   attributeChangedCallback(nombre, _anterior, nuevo) {
@@ -150,8 +152,8 @@ export class AppModal extends HTMLElement {
   open() {
     if (this.isOpen) return;
     this.#quienAbrio = getDeepActiveElement();
-    this.#bloquearScroll(true);
     this.#dialog.showModal();
+    this.#bloquearScroll(true);
   }
 
   close() {
@@ -176,4 +178,5 @@ export class AppModal extends HTMLElement {
   }
 }
 
+customElements.define('app-modal', AppModal);
 //Eso es todo, amigos
