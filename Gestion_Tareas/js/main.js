@@ -3,3 +3,4 @@
 import './components/app-modal.js';
 import './components/task-item.js';
 import './components/task-list.js';
+import './components/task-app.js';
