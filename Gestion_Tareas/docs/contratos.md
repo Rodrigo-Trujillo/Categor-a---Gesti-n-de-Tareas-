@@ -2,7 +2,7 @@
 
 Acuerdos entre Rodrigo y Alan para que las piezas encajen. Si algo cambia, se actualiza aquí **antes** de cambiar el código.
 
-> Estado: pendiente de aprobación conjunta.
+> Estado: aprobado por Rodrigo y Alan.
 > Las marcas **DECISIÓN** son cosas que el enunciado no define o interpreta; en el código se marcan con `// DECISIÓN:` y se anotan en el README para confirmarlas con el profesor.
 
 ---
@@ -25,7 +25,7 @@ Acuerdos entre Rodrigo y Alan para que las piezas encajen. Si algo cambia, se ac
 ## 2. Estructura de carpetas
 
 ```
-ProyectoTareas_JavaScript_TrujilloRodrigo/
+ProyectoTareas_JavaScript_TrujilloMarquez/
 ├── index.html
 ├── README.md
 ├── docs/
@@ -52,7 +52,9 @@ ProyectoTareas_JavaScript_TrujilloRodrigo/
         └── import-modal.js
 ```
 
-`main.js` importa y registra todos los componentes. El nombre del repo es el que exige el enunciado.
+En el repo, toda esta estructura vive dentro de la carpeta `Gestion_Tareas/` (la raíz del repo solo contiene esa carpeta).
+
+`main.js` importa y registra todos los componentes. Nombre del repo acordado por la pareja: `ProyectoTareas_JavaScript_TrujilloMarquez` (el enunciado usa como ejemplo `ProyectoTareas_JavaScript_TrujilloRodrigo`; ver sección 15).
 
 ---
 
@@ -118,6 +120,12 @@ Clave de localStorage: `"tasks:v1"` (arreglo JSON de tareas).
 | `removeTask(id)` | id | `boolean` |
 | `completeAllTasks()` | — | `number` (cuántas cambiaron de pendiente a completada) |
 | `clearTasks()` | — | `void` |
+
+Errores al guardar:
+- `saveTasks` devuelve `false` si localStorage falla (cuota llena o bloqueado).
+- `addTask`, `addTasks`, `updateTask`, `removeTask`, `completeAllTasks` y `clearTasks` **lanzan `Error`** con un mensaje legible si no se puede guardar.
+- `task-app` envuelve esas llamadas en `try/catch` y muestra el mensaje en una región `aria-live`.
+- `addTasks` también descarta, y cuenta como omitidas, las tareas que no tengan la forma del modelo.
 
 Regla de `updateTask`:
 - Tarea local: acepta `titulo`, `fechaRegistro` y `completado`.
@@ -296,7 +304,9 @@ Alan lleva más código. Si el tiempo aprieta, `api.js` es el candidato natural 
 ## 15. Pendiente de acordar
 
 - [x] Modelo de datos e IDs (vienen del enunciado: `titulo`, `fechaRegistro`, `completado`, `origen`, `apiId`, `LOC-`/`API-`)
-- [x] Nombre del repo: `ProyectoTareas_JavaScript_TrujilloRodrigo`
+- [ ] Renombrar el repo a `ProyectoTareas_JavaScript_TrujilloMarquez` (el actual es `Proyecto-1-Gesti-n-de-Tareas`) y confirmar con el profesor que acepta ese nombre en lugar de `..._TrujilloRodrigo`
+- [ ] Repo en privado (lo cambia Alan) y profesor agregado como colaborador
+- [x] El proyecto queda dentro de `Gestion_Tareas/`, no en la raíz del repo (acordado por la pareja). El README debe indicar abrir Live Server desde esa carpeta y, al desplegar en Netlify o Vercel, usar `Gestion_Tareas` como directorio base
 - [ ] Confirmar con el profesor que se puede trabajar en pareja (el enunciado dice "Entrega: Individual") y a nombre de quién va el repo
 - [ ] Confirmar con el profesor el campo `imported` y que las importadas se pueden marcar como completadas
 - [ ] Reglas de validación de título y fecha
