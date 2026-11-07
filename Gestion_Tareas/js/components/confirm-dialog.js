@@ -119,4 +119,4 @@ export class ConfirmDialog extends HTMLElement {
   }
 }
 
-// No se registra aquí: main.js hace customElements.define('confirm-dialog', ConfirmDialog)
+customElements.define('confirm-dialog', ConfirmDialog);

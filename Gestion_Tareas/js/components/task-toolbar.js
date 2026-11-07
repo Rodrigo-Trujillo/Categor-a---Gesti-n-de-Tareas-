@@ -128,4 +128,4 @@ export class TaskToolbar extends HTMLElement {
   }
 }
 
-// No se registra aquí: main.js hace customElements.define('task-toolbar', TaskToolbar)
+customElements.define('task-toolbar', TaskToolbar);
