@@ -6,4 +6,5 @@
    import './components/task-toolbar.js';
    import './components/confirm-dialog.js';
    import './components/task-form-modal.js';
+   import './components/import-modal.js';
    import './components/task-app.js';
