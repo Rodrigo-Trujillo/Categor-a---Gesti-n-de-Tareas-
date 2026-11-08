@@ -3,7 +3,7 @@
 Acuerdos entre Rodrigo y Alan para que las piezas encajen. Si algo cambia, se actualiza aquí **antes** de cambiar el código.
 
 > Estado: aprobado por Rodrigo y Alan.
-> Las marcas **DECISIÓN** son cosas que el enunciado no define o interpreta; en el código se marcan con `// DECISIÓN:` y se anotan en el README para confirmarlas con el profesor.
+> Las marcas **DECISIÓN** son cosas que el enunciado no define o interpreta; en el código se marcan con `// DECISIÓN:` y se anotan en el README para dejarlas documentadas.
 
 ---
 
@@ -19,6 +19,7 @@ Acuerdos entre Rodrigo y Alan para que las piezas encajen. Si algo cambia, se ac
 - Ramas: `main` (estable) y `feature/<nombre>`. Revisión cruzada antes de unir a `main`.
 - En `task-app`, cada uno conecta sus eventos en **bloques separados**, comentados con su nombre.
 - Todo cambio de contrato se edita en este archivo primero y se avisa al otro.
+- **Uso de asistentes de IA:** ambos integrantes usaron asistentes de inteligencia artificial como apoyo para diseñar, escribir y revisar código y documentación. El código y las decisiones fueron revisados por el equipo.
 
 ---
 
@@ -54,7 +55,7 @@ ProyectoTareas_JavaScript_TrujilloMarquez/
 
 En el repo, toda esta estructura vive dentro de la carpeta `Gestion_Tareas/` (la raíz del repo solo contiene esa carpeta).
 
-`main.js` importa y registra todos los componentes. Nombre del repo acordado por la pareja: `ProyectoTareas_JavaScript_TrujilloMarquez` (el enunciado usa como ejemplo `ProyectoTareas_JavaScript_TrujilloRodrigo`; ver sección 15).
+`main.js` solo **importa** los componentes; cada componente se registra en su propio archivo con `customElements.define`. Un componente se registra una sola vez y nunca en `main.js`. Nombre del repo acordado por la pareja: `ProyectoTareas_JavaScript_TrujilloMarquez` (el enunciado usa como ejemplo `ProyectoTareas_JavaScript_TrujilloRodrigo`; ver sección 15).
 
 ---
 
@@ -89,7 +90,7 @@ En el repo, toda esta estructura vive dentro de la carpeta `Gestion_Tareas/` (la
 - `origen === "api"` → `apiId` es número e `id === "API-" + apiId`.
 - `id`, `origen`, `apiId` e `imported` **nunca se modifican** después de crear la tarea. Solo los asignan `addTask` (tareas locales) y `api.js` (tareas importadas); ningún componente los escribe.
 
-DECISIÓN: `imported` se guarda además de `origen` por acuerdo de la pareja; la invariante evita que se contradigan. Confirmar con el profesor que acepta el campo extra.
+DECISIÓN: `imported` se guarda además de `origen` por acuerdo de la pareja; la invariante evita que se contradigan. Decisión del equipo, documentada en el README.
 
 ### Estándar de IDs
 
@@ -98,7 +99,7 @@ DECISIÓN: `imported` se guarda además de `origen` por acuerdo de la pareja; la
 
 ### Regla de tareas importadas
 
-DECISIÓN: en una tarea importada se puede cambiar **solo `completado`**; no se edita `titulo` ni `fechaRegistro`, y se puede eliminar. (El enunciado dice "no se pueden actualizar, solo eliminar"; esta lectura permite marcarlas como terminadas. Confirmar con el profesor.)
+DECISIÓN: en una tarea importada se puede cambiar **solo `completado`**; no se edita `titulo` ni `fechaRegistro`, y se puede eliminar. (El enunciado dice "no se pueden actualizar, solo eliminar"; esta lectura permite marcarlas como terminadas. Decisión del equipo, documentada en el README.)
 
 ### Tipo auxiliar
 
@@ -223,7 +224,10 @@ Todos se crean con `bubbles: true` y `composed: true` para atravesar el shadow D
 
 `app-modal` debe: atrapar el foco (incluido contenido en slots), cerrar con Escape, devolver el foco al abrir/cerrar con `getDeepActiveElement()` y bloquear el fondo.
 
-DECISIÓN (Alan elige y lo anota): implementarlo a mano o apoyarse en `<dialog>` con `showModal()`, que ya trae foco atrapado, Escape y fondo inerte. Si usan `<dialog>`, en la sustentación hay que poder explicar qué hace el navegador por ellos.
+DECISIÓN (tomada): `app-modal` se construye sobre `<dialog>` con `showModal()`.
+
+- **Lo que hace el navegador:** abre el modal en la capa superior, vuelve inerte el resto de la página, cierra con Escape y expone el rol de diálogo y el comportamiento modal.
+- **Lo que hace el código propio:** cerrar con la X y con el clic en el fondo, devolver el foco al elemento que abrió el modal (`getDeepActiveElement()`), bloquear el scroll de la página, emitir `modal:close` desde el evento `close` del `<dialog>` (así sale sea cual sea la forma de cerrar) y mantener el ciclo de Tab dentro del modal con un `keydown` propio, porque `showModal()` por sí solo deja pasar el foco a la interfaz del navegador.
 
 ---
 
@@ -242,7 +246,7 @@ Los componentes de Alan las usan desde el inicio; si falta una, se agrega aquí 
 
 ## 11. Accesibilidad mínima (WCAG 2.1 AA)
 
-- Modales: `role="dialog"`, `aria-modal="true"`, `aria-labelledby` apuntando al título.
+- Modales: al usar `<dialog>` con `showModal()`, el navegador ya expone el rol de diálogo y el comportamiento modal (no hace falta `role` ni `aria-modal` a mano); `aria-labelledby` apunta al título.
 - Campos con `<label>`; errores con `aria-invalid="true"` y `aria-describedby`.
 - Estado de carga: `aria-live="polite"`. Error de la API: `role="alert"` con botón "Reintentar".
 - Cada checkbox de tarea con nombre accesible que incluya el título.
@@ -304,11 +308,12 @@ Alan lleva más código. Si el tiempo aprieta, `api.js` es el candidato natural 
 ## 15. Pendiente de acordar
 
 - [x] Modelo de datos e IDs (vienen del enunciado: `titulo`, `fechaRegistro`, `completado`, `origen`, `apiId`, `LOC-`/`API-`)
-- [ ] Renombrar el repo a `ProyectoTareas_JavaScript_TrujilloMarquez` (el actual es `Proyecto-1-Gesti-n-de-Tareas`) y confirmar con el profesor que acepta ese nombre en lugar de `..._TrujilloRodrigo`
-- [ ] Repo en privado (lo cambia Alan) y profesor agregado como colaborador
+- [x] Repo renombrado a `ProyectoTareas_JavaScript_TrujilloMarquez`: es un trabajo en equipo, por eso el nombre lleva los dos apellidos
+- [x] Repo en privado
+- [ ] Profesor agregado como colaborador (Settings → Collaborators, cuando dé su usuario)
 - [x] El proyecto queda dentro de `Gestion_Tareas/`, no en la raíz del repo (acordado por la pareja). El README debe indicar abrir Live Server desde esa carpeta y, al desplegar en Netlify o Vercel, usar `Gestion_Tareas` como directorio base
-- [ ] Confirmar con el profesor que se puede trabajar en pareja (el enunciado dice "Entrega: Individual") y a nombre de quién va el repo
-- [ ] Confirmar con el profesor el campo `imported` y que las importadas se pueden marcar como completadas
-- [ ] Reglas de validación de título y fecha
-- [ ] `app-modal`: a mano o con `<dialog>`
-- [ ] Alan confirma el cambio de clave de localStorage a `"tasks:v1"`
+- [x] Trabajo en pareja: resuelto. El proyecto se entrega como trabajo en equipo, con un solo repositorio
+- [x] Campo `imported` e importadas marcables como completadas: decidido e implementado (ver "Decisiones tomadas" en el README)
+- [x] Reglas de validación: título obligatorio de 3 a 120 caracteres; fecha válida y no futura (`validators.js`)
+- [x] `app-modal`: se usa `<dialog>` con `showModal()` y el ciclo de Tab se mantiene a mano (ver sección 9)
+- [x] Clave de localStorage: `"tasks:v1"`

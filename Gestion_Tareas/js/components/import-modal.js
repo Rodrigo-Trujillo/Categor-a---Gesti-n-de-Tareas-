@@ -84,8 +84,10 @@ plantilla.innerHTML = `
     }
     .fila:hover { background: var(--color-fondo, #f3f4f6); }
     .fila.deshabilitada { cursor: default; opacity: 0.65; }
-    .titulo { flex: 1; min-width: 0; overflow-wrap: anywhere; }
-    .nota { flex: none; font-size: var(--texto-s, 0.875rem); color: var(--color-texto-suave, #4b5563); }
+    /* Título y nota van apilados: el título usa todo el ancho que queda junto a la casilla */
+    .texto { display: flex; flex: 1; flex-direction: column; min-width: 0; padding: var(--espacio-1, 4px) 0; }
+    .titulo { overflow-wrap: break-word; hyphens: auto; }
+    .nota { font-size: var(--texto-s, 0.875rem); color: var(--color-texto-suave, #4b5563); }
 
     .vacio { margin: 0; text-align: center; color: var(--color-texto-suave, #4b5563); }
 
@@ -295,7 +297,11 @@ export class ImportModal extends HTMLElement {
     nota.className = 'nota';
     nota.textContent = yaImportada ? 'Ya importada' : borrador.completado ? 'Completada' : 'Pendiente';
 
-    etiqueta.append(check, titulo, nota);
+    const texto = document.createElement('span');
+    texto.className = 'texto';
+    texto.append(titulo, nota);
+
+    etiqueta.append(check, texto);
     li.append(etiqueta);
     this.#filas.set(borrador.apiId, { li, check, borrador });
     return li;

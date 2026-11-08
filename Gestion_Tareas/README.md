@@ -42,6 +42,28 @@ No necesita instalación ni compilación. Solo hay que servir la carpeta con un 
 
 Para importar tareas se necesita conexión a internet.
 
+## Despliegue
+
+La aplicación es **estática**: no tiene servidor propio, ni instalación, ni paso de compilación (*build*). Se puede publicar en cualquier servicio de hosting estático. Dos puntos son importantes:
+
+- **Directorio base:** el proyecto vive dentro de la carpeta `Gestion_Tareas/`, no en la raíz del repositorio. Al publicar hay que indicar que esa es la carpeta que se sirve.
+- **HTTPS:** los hosts estáticos lo incluyen. Se necesita porque la aplicación usa `crypto.randomUUID()` para los identificadores, que solo funciona en `localhost` o en HTTPS.
+
+**Netlify**
+
+1. Opción rápida: entrar a [app.netlify.com/drop](https://app.netlify.com/drop) y arrastrar la carpeta `Gestion_Tareas`.
+2. Opción con el repositorio: *Add new site → Import an existing project*, elegir el repositorio y, en la configuración, indicar `Gestion_Tareas` como directorio base. Dejar vacío el comando de *build*.
+
+**Vercel**
+
+1. *Add New → Project* e importar el repositorio.
+2. En *Root Directory* elegir `Gestion_Tareas`.
+3. En *Framework Preset* elegir **Other** y dejar vacíos los comandos de *build* y *output*.
+
+**GitHub Pages:** con un repositorio privado requiere un plan de pago de GitHub, por eso para este proyecto es más práctico Netlify o Vercel.
+
+Después de publicar, se recomienda abrir la dirección pública y comprobar lo básico: crear una tarea, recargar la página (debe seguir ahí) e importar tareas (necesita internet).
+
 ## Estructura del proyecto
 
 ```
@@ -115,6 +137,7 @@ Se probaron a mano en el navegador, sin errores en la consola.
 - Las tareas importadas **se pueden marcar como completadas**; solo se bloquea editar el título y la fecha.
 - Se guarda el campo `imported` además de `origen`, para que la regla de bloqueo se lea directamente en cada tarea. Los dos siempre coinciden.
 - Los modales se abren como ventana centrada (`<dialog>`) en todos los tamaños de pantalla.
+- Las tareas de la API se cargan **al abrir el modal de importar**, no al iniciar la aplicación. Así la lista inicial solo muestra lo que la persona ha creado o elegido importar, y si no hay conexión el error aparece dentro del modal, con botón "Reintentar".
 
 ## Autores
 
