@@ -106,49 +106,25 @@ Además, el campo de fecha del formulario no deja elegir una fecha futura. Son d
 
 ## 5. Propuesta de diseño vs. resultado final
 
-En la etapa de diseño se dibujaron bocetos de baja fidelidad de las tres vistas. Aquí están junto al resultado final.
+En la etapa de diseño se dibujaron bocetos de baja fidelidad de las vistas principales. Cada lámina pone el **boceto a la izquierda** y la **app terminada a la derecha**, en escritorio (1100 × 700 px) y en móvil (390 × 844 px), para comparar lo que se planeó con lo que quedó.
 
 ### Lista de tareas
 
-**Propuesta (móvil y escritorio):**
-
-![Lista, propuesta móvil](wireframes/01-lista-movil.png)
-![Lista, propuesta escritorio](wireframes/02-lista-escritorio.png)
-
-**Resultado final:**
-
-![Lista, resultado final en escritorio](wireframes/final-lista.png)
-![Lista, resultado final en móvil](wireframes/final-lista-movil.png)
-
-### Estado vacío
-
-**Propuesta:** "Aún no tienes tareas" con los botones **Nueva tarea** e **Importar tareas**.
-
-![Estado vacío, propuesta](wireframes/03-lista-vacia-movil.png)
+![Comparativa de la lista de tareas: boceto a la izquierda y resultado final a la derecha, en escritorio y móvil](wireframes/comparativa-lista.png)
 
 ### Formulario de tarea
 
-**Propuesta (móvil y escritorio):**
-
-![Formulario, propuesta móvil](wireframes/04-formulario-movil.png)
-![Formulario, propuesta escritorio](wireframes/05-formulario-escritorio.png)
-
-**Resultado final:**
-
-![Formulario, resultado final en escritorio](wireframes/final-formulario.png)
-![Formulario, resultado final en móvil](wireframes/final-formulario-movil.png)
+![Comparativa del formulario de tarea: boceto a la izquierda y resultado final a la derecha, en escritorio y móvil](wireframes/comparativa-formulario.png)
 
 ### Importar desde la API
 
-**Propuesta (móvil y escritorio):**
+![Comparativa del modal de importar: boceto a la izquierda y resultado final a la derecha, en escritorio y móvil](wireframes/comparativa-importar.png)
 
-![Importar, propuesta móvil](wireframes/06-importar-movil.png)
-![Importar, propuesta escritorio](wireframes/07-importar-escritorio.png)
+### Estado vacío
 
-**Resultado final:**
+![Comparativa del estado vacío: boceto a la izquierda y resultado final a la derecha, en móvil](wireframes/comparativa-vacio.png)
 
-![Importar, resultado final en escritorio](wireframes/final-importar.png)
-![Importar, resultado final en móvil](wireframes/final-importar-movil.png)
+Las capturas sueltas de cada lámina están en la carpeta [`wireframes/`](wireframes/): los bocetos son `01` a `07` y las capturas de la app terminada empiezan con `final-`.
 
 ### Qué cambió y por qué
 
@@ -162,11 +138,12 @@ En la etapa de diseño se dibujaron bocetos de baja fidelidad de las tres vistas
 | Botón de importar | "Importar (3)" | "Importar 3 tareas" | Texto más claro para quien usa un lector de pantalla. |
 | Selector de fecha | Campo de texto | Selector nativo de fecha y hora, limitado a "ahora" | Evita escribir fechas con formato incorrecto. |
 | Modales en móvil | Hoja que sube desde abajo | Ventana centrada, con el mismo ancho máximo que en escritorio | `<dialog>` con `showModal()` ya trae foco, Escape y fondo oscuro; una ventana centrada funciona igual en todos los tamaños. |
+| Estado en el modal de importar | Etiqueta "Ya importada" a la derecha del título | Texto de estado (Pendiente, Completada, Ya importada) debajo del título | El título ocupa todo el ancho y las palabras largas ya no se cortan en pantallas de 320 px. |
 | Confirmaciones | No estaban dibujadas | Cuadro de confirmación para eliminar, marcar todas y vaciar | Son acciones que no se pueden deshacer. |
 
 ## 6. Decisiones de diseño
 
 - **Imports en `main.js` y registro en cada archivo:** así un componente se registra una sola vez y nunca hay dos `define` del mismo nombre.
 - **`aria-disabled` en lugar de `disabled`** en los botones "Marcar todas" y "Vaciar lista": tras confirmar, el modal devuelve el foco a ese botón y un botón `disabled` no puede recibirlo.
-- **Las importadas se pueden marcar como completadas.** El enunciado dice que no se pueden actualizar; esta lectura permite marcarlas como terminadas y solo bloquea título y fecha. *(Pendiente de confirmar con el profesor.)*
-- **El campo `imported`** se guarda además de `origen` por acuerdo de la pareja. *(Pendiente de confirmar con el profesor.)*
+- **Las importadas se pueden marcar como completadas.** El enunciado dice que no se pueden actualizar; esta lectura permite marcarlas como terminadas y solo bloquea título y fecha. *(Decisión del equipo.)*
+- **El campo `imported`** se guarda además de `origen` por acuerdo de la pareja. *(Decisión del equipo.)*
