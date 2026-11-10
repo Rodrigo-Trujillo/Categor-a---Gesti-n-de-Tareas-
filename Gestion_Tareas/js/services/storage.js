@@ -1,7 +1,7 @@
 const STORAGE_KEY = 'tasks:v1';
 
 // Campos que cada tipo de tarea permite cambiar
-const CAMPOS_LOCAL = ['titulo', 'fechaRegistro', 'completado'];
+const CAMPOS_LOCAL = ['titulo', 'descripcion', 'fechaRegistro', 'completado'];
 const CAMPOS_IMPORTADA = ['completado'];
 
 function esTareaValida(t) {
@@ -10,6 +10,8 @@ function esTareaValida(t) {
     typeof t === 'object' &&
     typeof t.id === 'string' &&
     typeof t.titulo === 'string' &&
+    // La descripción es opcional: las tareas guardadas antes de existir este campo siguen siendo válidas.
+    (t.descripcion === undefined || typeof t.descripcion === 'string') &&
     typeof t.fechaRegistro === 'string' &&
     typeof t.completado === 'boolean' &&
     (t.origen === 'local' || t.origen === 'api') &&
@@ -30,7 +32,10 @@ export function getTasks() {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return [];
     const data = JSON.parse(raw);
-    return Array.isArray(data) ? data.filter(esTareaValida) : [];
+    // Se normaliza: toda tarea sale con `descripcion` (cadena vacía si no la tenía).
+    return Array.isArray(data)
+      ? data.filter(esTareaValida).map((t) => ({ ...t, descripcion: t.descripcion ?? '' }))
+      : [];
   } catch {
     return [];
   }
@@ -45,10 +50,11 @@ export function saveTasks(tasks) {
   }
 }
 
-export function addTask({ titulo, fechaRegistro, completado = false }) {
+export function addTask({ titulo, descripcion = '', fechaRegistro, completado = false }) {
   const tarea = {
     id: 'LOC-' + crypto.randomUUID(),
     titulo,
+    descripcion,
     fechaRegistro: fechaRegistro ?? new Date().toISOString(),
     completado,
     origen: 'local',

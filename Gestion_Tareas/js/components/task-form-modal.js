@@ -2,13 +2,13 @@
 // Modal con el formulario para crear o editar una tarea.
 //
 // API pública:  openCreate()  |  openEdit(task)
-// Emite:        task:save  { id?, titulo, fechaRegistro (ISO), completado }
+// Emite:        task:save  { id?, titulo, descripcion, fechaRegistro (ISO), completado }
 //               (sin id = crear; con id = actualizar). Guardar en storage es de task-app.
 //
 // El formulario solo existe visible mientras el modal está abierto.
 
 import './app-modal.js';
-import { validateTitle, validateDate } from '../utils/validators.js';
+import { validateTitle, validateDescription, validateDate } from '../utils/validators.js';
 import { toDatetimeLocal, fromDatetimeLocal } from '../utils/utils.js';
 
 const plantilla = document.createElement('template');
@@ -22,7 +22,7 @@ plantilla.innerHTML = `
 
     label { font-size: var(--texto-s, 0.875rem); font-weight: 600; }
 
-    input[type="text"], input[type="datetime-local"] {
+    input[type="text"], input[type="datetime-local"], textarea {
       box-sizing: border-box;
       min-height: 44px;
       padding: 0 var(--espacio-3, 16px);
@@ -32,7 +32,8 @@ plantilla.innerHTML = `
       color: inherit;
       font: inherit;
     }
-    input[aria-invalid="true"] { border-color: var(--color-error, #b91c1c); }
+    textarea { min-height: 96px; padding: var(--espacio-2, 8px) var(--espacio-3, 16px); resize: vertical; }
+    input[aria-invalid="true"], textarea[aria-invalid="true"] { border-color: var(--color-error, #b91c1c); }
 
     .check { display: flex; align-items: center; gap: var(--espacio-3, 16px); min-height: 44px; }
     .check input { width: 1.5rem; height: 1.5rem; margin: 0; accent-color: var(--color-primario, #2563eb); }
@@ -57,7 +58,7 @@ plantilla.innerHTML = `
       background: var(--color-primario, #2563eb);
       color: var(--color-primario-texto, #ffffff);
     }
-    :is(button, input):focus-visible {
+    :is(button, input, textarea):focus-visible {
       outline: 3px solid var(--color-foco, #1d4ed8);
       outline-offset: 2px;
     }
@@ -69,6 +70,12 @@ plantilla.innerHTML = `
         <label for="titulo">Título de la tarea</label>
         <input id="titulo" type="text" autocomplete="off">
         <p class="error" id="error-titulo" hidden></p>
+      </div>
+
+      <div class="campo">
+        <label for="descripcion">Descripción (opcional, máximo 500 caracteres)</label>
+        <textarea id="descripcion" rows="3"></textarea>
+        <p class="error" id="error-descripcion" hidden></p>
       </div>
 
       <div class="campo">
@@ -105,11 +112,13 @@ export class TaskFormModal extends HTMLElement {
     this.#form = raiz.querySelector('#form');
     this.#campos = {
       titulo: raiz.querySelector('#titulo'),
+      descripcion: raiz.querySelector('#descripcion'),
       fecha: raiz.querySelector('#fecha'),
       completado: raiz.querySelector('#completado'),
     };
     this.#errores = {
       titulo: raiz.querySelector('#error-titulo'),
+      descripcion: raiz.querySelector('#error-descripcion'),
       fecha: raiz.querySelector('#error-fecha'),
     };
 
@@ -123,6 +132,11 @@ export class TaskFormModal extends HTMLElement {
     this.#campos.titulo.addEventListener('input', () => {
       if (this.#campos.titulo.getAttribute('aria-invalid') === 'true') {
         this.#mostrarError('titulo', validateTitle(this.#campos.titulo.value));
+      }
+    });
+    this.#campos.descripcion.addEventListener('input', () => {
+      if (this.#campos.descripcion.getAttribute('aria-invalid') === 'true') {
+        this.#mostrarError('descripcion', validateDescription(this.#campos.descripcion.value));
       }
     });
     this.#campos.fecha.addEventListener('change', () => {
@@ -140,6 +154,7 @@ export class TaskFormModal extends HTMLElement {
       heading: 'Nueva tarea',
       id: null,
       titulo: '',
+      descripcion: '',
       fechaISO: new Date().toISOString(), // por defecto, ahora
       completado: false,
     });
@@ -155,18 +170,20 @@ export class TaskFormModal extends HTMLElement {
       heading: 'Editar tarea',
       id: task.id,
       titulo: task.titulo,
+      descripcion: task.descripcion ?? '',
       fechaISO: task.fechaRegistro,
       completado: task.completado,
     });
   }
 
-  #abrir({ heading, id, titulo, fechaISO, completado }) {
+  #abrir({ heading, id, titulo, descripcion, fechaISO, completado }) {
     this.#limpiar();
     this.#id = id;
     this.#fechaOriginal = id ? fechaISO : null;
 
     this.#modal.setAttribute('heading', heading);
     this.#campos.titulo.value = titulo;
+    this.#campos.descripcion.value = descripcion;
     this.#campos.fecha.value = toDatetimeLocal(fechaISO);
     this.#campos.fecha.max = toDatetimeLocal(new Date().toISOString()); // el selector no deja elegir futuro
     this.#campos.completado.checked = completado;
@@ -186,19 +203,24 @@ export class TaskFormModal extends HTMLElement {
 
   #guardar() {
     const titulo = this.#campos.titulo.value;
+    const descripcion = this.#campos.descripcion.value;
     const fechaISO = this.#valorFechaISO();
 
     const resultadoTitulo = validateTitle(titulo);
+    const resultadoDescripcion = validateDescription(descripcion);
     const resultadoFecha = validateDate(fechaISO);
     this.#mostrarError('titulo', resultadoTitulo);
+    this.#mostrarError('descripcion', resultadoDescripcion);
     this.#mostrarError('fecha', resultadoFecha);
 
     // Con errores no se guarda: el foco va al primer campo inválido.
     if (!resultadoTitulo.valid) { this.#campos.titulo.focus(); return; }
+    if (!resultadoDescripcion.valid) { this.#campos.descripcion.focus(); return; }
     if (!resultadoFecha.valid) { this.#campos.fecha.focus(); return; }
 
     const detail = {
       titulo: titulo.trim(),
+      descripcion: descripcion.trim(),
       fechaRegistro: fechaISO,
       completado: this.#campos.completado.checked,
     };
@@ -222,7 +244,7 @@ export class TaskFormModal extends HTMLElement {
   }
 
   #limpiar() {
-    for (const nombre of ['titulo', 'fecha']) {
+    for (const nombre of ['titulo', 'descripcion', 'fecha']) {
       const campo = this.#campos[nombre];
       this.#errores[nombre].textContent = '';
       this.#errores[nombre].hidden = true;

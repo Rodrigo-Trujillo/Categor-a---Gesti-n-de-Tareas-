@@ -4,7 +4,11 @@
 
 const TITULO_MIN = 3;
 const TITULO_MAX = 120;
+const DESCRIPCION_MAX = 500;
 const TOLERANCIA_MS = 60 * 1000; // 1 minuto
+
+// Caracteres de control (invisibles, p. ej. un NUL o un retroceso). Se permiten el salto de línea y el tabulador.
+const CARACTERES_DE_CONTROL = /[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/;
 
 /**
  * Valida el título de una tarea.
@@ -22,6 +26,26 @@ export function validateTitle(titulo) {
   }
   if (limpio.length > TITULO_MAX) {
     return { valid: false, error: `El título no puede superar ${TITULO_MAX} caracteres.` };
+  }
+  if (CARACTERES_DE_CONTROL.test(limpio)) {
+    return { valid: false, error: "El título contiene caracteres no permitidos." };
+  }
+  return { valid: true, error: "" };
+}
+
+/**
+ * Valida la descripción de una tarea. Es opcional: vacía es válida.
+ * @param {string} descripcion
+ * @returns {{ valid: boolean, error: string }}
+ */
+export function validateDescription(descripcion) {
+  const limpia = typeof descripcion === "string" ? descripcion.trim() : "";
+
+  if (limpia.length > DESCRIPCION_MAX) {
+    return { valid: false, error: `La descripción no puede superar ${DESCRIPCION_MAX} caracteres.` };
+  }
+  if (CARACTERES_DE_CONTROL.test(limpia)) {
+    return { valid: false, error: "La descripción contiene caracteres no permitidos." };
   }
   return { valid: true, error: "" };
 }
