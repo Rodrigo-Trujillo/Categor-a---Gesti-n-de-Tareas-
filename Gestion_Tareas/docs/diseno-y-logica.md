@@ -45,7 +45,7 @@ Todos los eventos se emiten con `bubbles: true` y `composed: true`, para que atr
 | `task:edit-request` | task-item | `{ id }` |
 | `task:delete-request` | task-item | `{ id }` |
 | `task:create-request` | task-toolbar, task-list | — |
-| `task:save` | task-form-modal | `{ id?, titulo, fechaRegistro, completado }` |
+| `task:save` | task-form-modal | `{ id?, titulo, descripcion, fechaRegistro, completado }` |
 | `import:open` | task-toolbar, task-list | — |
 | `import:confirm` | import-modal | `{ tasks }` |
 | `filter:change` | task-toolbar | `{ status }` |
@@ -64,6 +64,7 @@ Las tareas se guardan en `localStorage` con la clave `tasks:v1`.
 {
   id: "LOC-<uuid>" | "API-<id>",
   titulo: "string",
+  descripcion: "string",                        // opcional, hasta 500 caracteres
   fechaRegistro: "2026-11-07T17:07:00.000Z",  // ISO 8601
   completado: false,
   origen: "local" | "api",
@@ -76,11 +77,12 @@ Las tareas se guardan en `localStorage` con la clave `tasks:v1`.
 - Las tareas importadas tienen `id` con prefijo `API-`, `origen: "api"`, `apiId` con el id de JSONPlaceholder e `imported: true`.
 - `imported` siempre coincide con `origen === "api"`.
 - `id`, `origen`, `apiId` e `imported` no se modifican después de crear la tarea.
+- `descripcion` es opcional. Las tareas guardadas antes de existir este campo siguen siendo válidas (`storage.js` las lee con descripción vacía) y las importadas la guardan vacía. La lista no la muestra; solo se ve y se edita en el formulario.
 - Si `localStorage` falla al guardar, `storage.js` lanza un `Error` y `task-app` muestra el mensaje en vez de romper la app.
 
 ### Reglas de las tareas importadas
 
-- Solo se puede cambiar `completado` y eliminarlas. No se edita título ni fecha.
+- Solo se puede cambiar `completado` y eliminarlas. No se edita título, descripción ni fecha.
 - El botón **Editar** no aparece en `task-item` cuando `imported` es `true`.
 - `storage.js` lo refuerza: `updateTask` lanza un error si se intenta cambiar otro campo de una tarea importada.
 - Una tarea importada no se puede importar dos veces: `import-modal` deshabilita las que ya existen ("Ya importada") y `addTasks` omite duplicados por `apiId`.
@@ -91,6 +93,8 @@ Las tareas se guardan en `localStorage` con la clave `tasks:v1`.
 Son funciones puras que devuelven `{ valid, error }`.
 
 - **Título:** obligatorio, se recorta con `trim()` y debe tener entre 3 y 120 caracteres.
+- **Descripción:** opcional (vacía es válida) y de máximo 500 caracteres. Se agregó por sugerencia del profesor.
+- **Caracteres:** el título y la descripción rechazan los caracteres de control invisibles; el salto de línea y el tabulador sí se permiten en la descripción.
 - **Fecha:** debe ser válida y no puede ser futura (con 1 minuto de tolerancia por el desfase del reloj).
 
 Además, el campo de fecha del formulario no deja elegir una fecha futura. Son dos capas: el campo la bloquea al elegir y `validateDate` la rechaza si llega de otra forma.
@@ -124,6 +128,8 @@ En la etapa de diseño se dibujaron bocetos de baja fidelidad de las vistas prin
 
 ![Comparativa del estado vacío: boceto a la izquierda y resultado final a la derecha, en móvil](wireframes/comparativa-vacio.png)
 
+El campo **Descripción** no estaba en el boceto del formulario: se agregó después, por sugerencia del profesor, y por eso aparece solo en el resultado final.
+
 Las capturas sueltas de cada lámina están en la carpeta [`wireframes/`](wireframes/): los bocetos son `01` a `07` y las capturas de la app terminada empiezan con `final-`.
 
 ### Qué cambió y por qué
@@ -136,6 +142,7 @@ Las capturas sueltas de cada lámina están en la carpeta [`wireframes/`](wirefr
 | Mensajes | Zona de mensajes al final | Aviso con borde verde bajo el título | Se ve justo después de la acción, sin tener que bajar. |
 | Tarea importada | Nota "Importada: no se edita" | Solo el botón Eliminar, con etiqueta "API" | Menos ruido: la ausencia de Editar ya lo comunica. |
 | Botón de importar | "Importar (3)" | "Importar 3 tareas" | Texto más claro para quien usa un lector de pantalla. |
+| Descripción de la tarea | No estaba (solo título, fecha y estado) | Campo opcional "Descripción" en el formulario; la lista no la muestra | El profesor sugirió agregarla. Así la lista no se carga de texto y el detalle se consulta al editar. |
 | Selector de fecha | Campo de texto | Selector nativo de fecha y hora, limitado a "ahora" | Evita escribir fechas con formato incorrecto. |
 | Modales en móvil | Hoja que sube desde abajo | Ventana centrada, con el mismo ancho máximo que en escritorio | `<dialog>` con `showModal()` ya trae foco, Escape y fondo oscuro; una ventana centrada funciona igual en todos los tamaños. |
 | Estado en el modal de importar | Etiqueta "Ya importada" a la derecha del título | Texto de estado (Pendiente, Completada, Ya importada) debajo del título | El título ocupa todo el ancho y las palabras largas ya no se cortan en pantallas de 320 px. |
@@ -146,4 +153,5 @@ Las capturas sueltas de cada lámina están en la carpeta [`wireframes/`](wirefr
 - **Imports en `main.js` y registro en cada archivo:** así un componente se registra una sola vez y nunca hay dos `define` del mismo nombre.
 - **`aria-disabled` en lugar de `disabled`** en los botones "Marcar todas" y "Vaciar lista": tras confirmar, el modal devuelve el foco a ese botón y un botón `disabled` no puede recibirlo.
 - **Las importadas se pueden marcar como completadas.** El enunciado dice que no se pueden actualizar; esta lectura permite marcarlas como terminadas y solo bloquea título y fecha. *(Decisión del equipo.)*
+- **La descripción es opcional y no aparece en la lista:** evita una lista cargada de texto; se consulta y se edita en el formulario.
 - **El campo `imported`** se guarda además de `origen` por acuerdo de la pareja. *(Decisión del equipo.)*
