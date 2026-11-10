@@ -3,6 +3,7 @@
 Acuerdos entre Rodrigo y Alan para que las piezas encajen. Si algo cambia, se actualiza aquí **antes** de cambiar el código.
 
 > Estado: aprobado por Rodrigo y Alan.
+> Actualización del 9 de noviembre: por indicación del profesor se agrega el campo `descripcion` (opcional) a las tareas.
 > Las marcas **DECISIÓN** son cosas que el enunciado no define o interpreta; en el código se marcan con `// DECISIÓN:` y se anotan en el README para dejarlas documentadas.
 
 ---
@@ -65,6 +66,7 @@ En el repo, toda esta estructura vive dentro de la carpeta `Gestion_Tareas/` (la
 {
   "id": "LOC-3f2a9c1e-8b7d-4e2a-9f1c-1a2b3c4d5e6f",
   "titulo": "Estudiar Web Components",
+  "descripcion": "Repasar Custom Elements y Shadow DOM",
   "fechaRegistro": "2026-11-05T10:30:00.000Z",
   "completado": false,
   "origen": "local",
@@ -76,12 +78,13 @@ En el repo, toda esta estructura vive dentro de la carpeta `Gestion_Tareas/` (la
 | Campo | Tipo | Notas |
 |---|---|---|
 | `id` | string | Ver estándar de IDs |
-| `titulo` | string | Descripción de la tarea |
+| `titulo` | string | Título de la tarea (qué hay que hacer) |
+| `descripcion` | string | Opcional, hasta 500 caracteres. Vacía por defecto y en las importadas. No se muestra en la lista; se ve y se edita en el formulario |
 | `fechaRegistro` | string (ISO 8601, UTC) | Local: la elige el usuario (por defecto, ahora). Importada: el momento de confirmar la importación |
 | `completado` | boolean | Estado |
 | `origen` | `"local"` \| `"api"` | De dónde viene la tarea |
 | `apiId` | number \| null | `id` de JSONPlaceholder; sirve para detectar duplicados |
-| `imported` | boolean | `true` = no se edita título ni fecha, solo se elimina |
+| `imported` | boolean | `true` = no se edita título, descripción ni fecha |
 
 ### Invariantes (siempre deben cumplirse)
 
@@ -99,7 +102,7 @@ DECISIÓN: `imported` se guarda además de `origen` por acuerdo de la pareja; la
 
 ### Regla de tareas importadas
 
-DECISIÓN: en una tarea importada se puede cambiar **solo `completado`**; no se edita `titulo` ni `fechaRegistro`, y se puede eliminar. (El enunciado dice "no se pueden actualizar, solo eliminar"; esta lectura permite marcarlas como terminadas. Decisión del equipo, documentada en el README.)
+DECISIÓN: en una tarea importada se puede cambiar **solo `completado`**; no se edita `titulo`, `descripcion` ni `fechaRegistro`, y se puede eliminar. (El enunciado dice "no se pueden actualizar, solo eliminar"; esta lectura permite marcarlas como terminadas. Decisión del equipo, documentada en el README.)
 
 ### Tipo auxiliar
 
@@ -115,7 +118,7 @@ Clave de localStorage: `"tasks:v1"` (arreglo JSON de tareas).
 |---|---|---|
 | `getTasks()` | — | `Task[]`. Arreglo vacío si no hay datos, el JSON está dañado o no es un arreglo. Descarta elementos que no tengan la forma del modelo |
 | `saveTasks(tasks)` | `Task[]` | `boolean` (`false` si localStorage falla: cuota llena o bloqueado). `task-app` muestra el error |
-| `addTask(datos)` | `{ titulo, fechaRegistro?, completado? }` | `Task` nueva. Genera `LOC-` + UUID, `origen: "local"`, `apiId: null`, `imported: false`; `fechaRegistro` por defecto es ahora |
+| `addTask(datos)` | `{ titulo, descripcion?, fechaRegistro?, completado? }` | `Task` nueva. Genera `LOC-` + UUID, `origen: "local"`, `apiId: null`, `imported: false`; `fechaRegistro` por defecto es ahora |
 | `addTasks(tasks)` | `Task[]` ya completas (con fecha) | `{ agregadas: number, omitidas: number }`. Omite las que ya existan por `apiId`, incluso repetidas dentro del mismo lote |
 | `updateTask(id, cambios)` | id y campos | `Task` actualizada, o `null` si no existe (ver regla abajo) |
 | `removeTask(id)` | id | `boolean` |
@@ -129,7 +132,7 @@ Errores al guardar:
 - `addTasks` también descarta, y cuenta como omitidas, las tareas que no tengan la forma del modelo.
 
 Regla de `updateTask`:
-- Tarea local: acepta `titulo`, `fechaRegistro` y `completado`.
+- Tarea local: acepta `titulo`, `descripcion`, `fechaRegistro` y `completado`.
 - Tarea importada: acepta **solo** `completado`.
 - Si `cambios` trae un campo no permitido (incluido `id`, `origen`, `apiId`, `imported`), **lanza `Error`**: así los bugs de la interfaz se notan en vez de ocultarse.
 
@@ -142,9 +145,12 @@ DECISIÓN: "Marcar todas como terminadas" afecta a **todas** las tareas guardada
 | Función | Devuelve |
 |---|---|
 | `validateTitle(titulo)` | `{ valid: boolean, error: string }` |
+| `validateDescription(descripcion)` | `{ valid: boolean, error: string }`. Opcional: vacía es válida |
 | `validateDate(fecha)` | `{ valid: boolean, error: string }`. Acepta ISO o el valor de un `datetime-local` |
 
 - DECISIÓN: título obligatorio, con `trim`, mínimo 3 y máximo 120 caracteres.
+- DECISIÓN: descripción opcional, máximo 500 caracteres.
+- Título y descripción rechazan caracteres de control invisibles (el salto de línea y el tabulador se permiten en la descripción).
 - DECISIÓN: la fecha debe ser válida y no puede ser futura (con 1 minuto de tolerancia, porque el valor por defecto es "ahora").
 - Los mensajes de error van en español y se muestran junto al campo.
 
@@ -190,7 +196,7 @@ Todos se crean con `bubbles: true` y `composed: true` para atravesar el shadow D
 |---|---|---|---|
 | `task:create-request` | task-toolbar, task-list (estado vacío) | — | Abre el formulario vacío |
 | `task:edit-request` | task-item | `{ id }` | Abre el formulario con la tarea |
-| `task:save` | task-form-modal | `{ id?, titulo, fechaRegistro, completado }` (fecha ya en ISO) | Si trae `id`, actualiza; si no, crea. Guarda y repinta |
+| `task:save` | task-form-modal | `{ id?, titulo, descripcion, fechaRegistro, completado }` (fecha ya en ISO) | Si trae `id`, actualiza; si no, crea. Guarda y repinta |
 | `task:toggle` | task-item | `{ id, completado }` | Actualiza `completado` |
 | `task:delete-request` | task-item | `{ id }` | Abre `confirm-dialog` (`delete-task`) |
 | `import:open` | task-toolbar, task-list (estado vacío) | — | Pasa `existingApiIds` y abre `import-modal` |
