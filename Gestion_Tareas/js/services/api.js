@@ -22,6 +22,7 @@ function aBorrador(todo) {
   return {
     id: `API-${todo.id}`,
     titulo: todo.title.trim(),
+    descripcion: '', // las tareas de la API no traen descripción
     completado: todo.completed,
     origen: 'api',
     apiId: todo.id,
