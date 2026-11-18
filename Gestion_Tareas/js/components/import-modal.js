@@ -2,8 +2,9 @@
 // Modal para importar tareas desde la API pública.
 //
 // Propiedad:  existingApiIds: number[]   apiIds que ya están guardados (quedan deshabilitados)
+//             categories: {id, nombre}[]  categorías disponibles para elegir (las asigna task-app)
 // Método:     open()                     abre el modal y carga las tareas de la API
-// Emite:      import:confirm { tasks: TaskDraft[] }   (tareas sin fechaRegistro)
+// Emite:      import:confirm { tasks: TaskDraft[], categoriaId: string|null }   (tareas sin fechaRegistro)
 //
 // Al cerrar el modal se cancela la petición en curso (AbortController).
 
@@ -35,7 +36,7 @@ plantilla.innerHTML = `
     .campo { display: flex; flex-direction: column; gap: var(--espacio-1, 4px); }
     label.etiqueta { font-size: var(--texto-s, 0.875rem); font-weight: 600; }
 
-    input[type="search"] {
+    input[type="search"], select {
       box-sizing: border-box;
       min-height: 44px;
       padding: 0 var(--espacio-3, 16px);
@@ -109,7 +110,7 @@ plantilla.innerHTML = `
       background: var(--color-primario, #2563eb);
       color: var(--color-primario-texto, #ffffff);
     }
-    :is(button, input):focus-visible {
+    :is(button, input, select):focus-visible {
       outline: 3px solid var(--color-foco, #1d4ed8);
       outline-offset: 2px;
     }
@@ -125,6 +126,13 @@ plantilla.innerHTML = `
       </div>
 
       <div class="contenido" id="listo" hidden>
+        <div class="campo">
+          <label class="etiqueta" for="categoria">Categoría de las tareas importadas</label>
+          <select id="categoria">
+            <option value="">Sin categoría</option>
+          </select>
+        </div>
+
         <div class="campo">
           <label class="etiqueta" for="buscar">Buscar en el banco de tareas</label>
           <input id="buscar" type="search" autocomplete="off" placeholder="Buscar por título">
@@ -171,6 +179,7 @@ export class ImportModal extends HTMLElement {
       reintentar: raiz.querySelector('#reintentar'),
       listo: raiz.querySelector('#listo'),
       buscar: raiz.querySelector('#buscar'),
+      categoria: raiz.querySelector('#categoria'),
       todas: raiz.querySelector('#todas'),
       contador: raiz.querySelector('#contador'),
       lista: raiz.querySelector('#lista'),
@@ -210,6 +219,21 @@ export class ImportModal extends HTMLElement {
 
   set existingApiIds(ids) {
     this.#existentes = new Set(Array.isArray(ids) ? ids : []);
+  }
+
+  // task-app asigna la lista cada vez que cambian las categorías.
+  set categories(lista) {
+    const categorias = Array.isArray(lista) ? lista : [];
+    const select = this.#refs.categoria;
+    const seleccionada = select.value; // se conserva la elección al repintar
+
+    // new Option(texto, valor) usa textContent: el nombre lo escribe el usuario.
+    select.replaceChildren(
+      new Option('Sin categoría', ''),
+      ...categorias.map((c) => new Option(c.nombre, c.id))
+    );
+    select.value = seleccionada;
+    if (select.selectedIndex === -1) select.selectedIndex = 0; // la elegida ya no existe
   }
 
   get existingApiIds() {
@@ -260,6 +284,7 @@ export class ImportModal extends HTMLElement {
     this.#seleccion.clear();
     this.#query = '';
     this.#refs.buscar.value = '';
+    this.#refs.categoria.selectedIndex = 0; // vuelve a "Sin categoría"
     this.#refs.lista.replaceChildren();
     this.#actualizarResumen();
   }
@@ -360,7 +385,11 @@ export class ImportModal extends HTMLElement {
     if (tasks.length === 0) return;
 
     this.dispatchEvent(
-      new CustomEvent('import:confirm', { detail: { tasks }, bubbles: true, composed: true })
+      new CustomEvent('import:confirm', {
+        detail: { tasks, categoriaId: this.#refs.categoria.value || null }, // '' = sin categoría
+        bubbles: true,
+        composed: true,
+      })
     );
     this.#modal.close();
   }

@@ -6,6 +6,8 @@ const TITULO_MIN = 3;
 const TITULO_MAX = 120;
 const DESCRIPCION_MAX = 500;
 const TOLERANCIA_MS = 60 * 1000; // 1 minuto
+const CATEGORIA_MIN = 2;
+const CATEGORIA_MAX = 30;
 
 // Caracteres de control (invisibles, p. ej. un NUL o un retroceso). Se permiten el salto de línea y el tabulador.
 const CARACTERES_DE_CONTROL = /[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/;
@@ -68,6 +70,34 @@ export function validateDate(fecha) {
   }
   if (ms > Date.now() + TOLERANCIA_MS) {
     return { valid: false, error: "La fecha no puede ser futura." };
+  }
+  return { valid: true, error: "" };
+}
+
+/**
+ * Valida la categoría de una tarea.
+ * @param {string} nombre
+ * @param {string[]} otrosNombres Nombres de las demas categorías (para evitar duplicados). Opcional.
+ * @returns {{ valid: boolean, error: string }}
+ */
+export function validateCategory(nombre, otrosNombres = []) {
+  const limpio = typeof nombre === "string" ? nombre.trim() : "";
+
+  if (limpio.length === 0) {
+    return { valid: false, error: "La categoría es obligatoria." };
+  }
+  if (limpio.length < CATEGORIA_MIN) {
+    return { valid: false, error: `La categoría debe tener al menos ${CATEGORIA_MIN} caracteres.` };
+  }
+  if (limpio.length > CATEGORIA_MAX) {
+    return { valid: false, error: `La categoría no puede superar ${CATEGORIA_MAX} caracteres.` };
+  }
+  if (CARACTERES_DE_CONTROL.test(limpio)) {
+    return { valid: false, error: "La categoría contiene caracteres no permitidos." };
+  }
+  const repetida = otrosNombres.some((n) => n.trim().toLowerCase() === limpio.toLowerCase());
+  if (repetida) {
+    return { valid: false, error: "Ya existe una categoría con ese nombre." };
   }
   return { valid: true, error: "" };
 }
