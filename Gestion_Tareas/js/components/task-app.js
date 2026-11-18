@@ -8,6 +8,7 @@ import './task-toolbar.js';
 import './task-list.js';
 import './confirm-dialog.js';
 import './task-form-modal.js';
+import './category-manager-modal.js';
 import { filterTasks } from '../utils/utils.js';
 import {
   getTasks,
@@ -17,6 +18,10 @@ import {
   removeTask,
   completeAllTasks,
   clearTasks,
+  getCategories,
+  addCategory,
+  updateCategory,
+  removeCategory,
 } from '../services/storage.js';
 
 const plantilla = document.createElement('template');
@@ -60,6 +65,7 @@ plantilla.innerHTML = `
   <task-form-modal></task-form-modal>
   <confirm-dialog></confirm-dialog>
   <import-modal></import-modal>
+  <category-manager-modal></category-manager-modal>
 `;
 
 export class TaskApp extends HTMLElement {
@@ -82,6 +88,7 @@ export class TaskApp extends HTMLElement {
       formulario: raiz.querySelector('task-form-modal'),
       confirmar: raiz.querySelector('confirm-dialog'),
       importar: raiz.querySelector('import-modal'),
+      categorias: raiz.querySelector('category-manager-modal'),
     };
 
     // Los eventos de los hijos son composed: atraviesan sus shadow DOM y llegan aquí.
@@ -101,6 +108,10 @@ export class TaskApp extends HTMLElement {
 
     alEvento('import:open', () => this.#abrirImportacion());
     alEvento('import:confirm', ({ tasks }) => this.#importar(tasks));
+
+    alEvento('categories:open', () => this.#abrirCategorias());
+    alEvento('category:save', (datos) => this.#guardarCategoria(datos));
+    alEvento('category:delete-request', ({ id }) => this.#pedirEliminarCategoria(id));
 
     alEvento('filter:change', ({ status }) => { this.#status = status; this.#render(); });
     alEvento('search:change', ({ query }) => { this.#query = query; this.#render(); });
@@ -131,6 +142,9 @@ export class TaskApp extends HTMLElement {
     this.#refs.lista.tasks = visibles;
     this.#refs.lista.setAttribute('empty-reason', todas.length === 0 ? 'none' : 'no-results');
     this.#refs.barra.toggleAttribute('no-tasks', todas.length === 0);
+    const categorias = getCategories();
+    this.#refs.categorias.categories = categorias;
+    this.#refs.formulario.categories = categorias;
   }
 
   // Ejecuta una acción de storage. Si falla (por ejemplo, almacenamiento lleno), avisa.
@@ -235,9 +249,54 @@ export class TaskApp extends HTMLElement {
         });
         break;
 
+      case 'delete-category':
+        this.#intentar(() => {
+          if (removeCategory(payload.id)) this.#anunciar('Categoría eliminada.');
+        });
+        // La fila que tenía el botón ya no existe: el foco vuelve al campo del modal.
+        this.#refs.categorias.focusNombre();
+        break;
+
       default:
         console.warn(`task-app: acción de confirmación desconocida: ${action}`);
     }
+  }
+
+  // ---------- Categorías ----------
+
+  #abrirCategorias() {
+    this.#refs.categorias.categories = getCategories();
+    this.#refs.categorias.open();
+  }
+
+  #guardarCategoria({ id, nombre }) {
+    this.#intentar(() => {
+      if (id) {
+        if (!updateCategory(id, nombre)) throw new Error('La categoría que intentas editar ya no existe.');
+        this.#anunciar('Categoría actualizada.');
+      } else {
+        addCategory(nombre);
+        this.#anunciar('Categoría creada.');
+      }
+    });
+  }
+
+  #pedirEliminarCategoria(id) {
+    const categoria = getCategories().find((c) => c.id === id);
+    if (!categoria) return;
+
+    const enUso = getTasks().filter((t) => t.categoriaId === id).length;
+    const aviso = enUso > 0
+      ? ` Sus ${enUso} ${enUso === 1 ? 'tarea quedará' : 'tareas quedarán'} sin categoría.`
+      : '';
+
+    this.#refs.confirmar.ask({
+      action: 'delete-category',
+      payload: { id },
+      heading: 'Eliminar categoría',
+      message: `¿Eliminar la categoría “${categoria.nombre}”?${aviso}`,
+      confirmLabel: 'Eliminar',
+    });
   }
 
   // ---------- Importar ----------

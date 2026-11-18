@@ -10,7 +10,7 @@
 //   confirm:cancel { action, payload }   al cancelar, con Escape, con la X o con el fondo
 
 // Acciones destructivas: el botón de confirmar se pinta en color de error.
-const ACCIONES_PELIGROSAS = new Set(['delete-task', 'clear-all']);
+const ACCIONES_PELIGROSAS = new Set(['delete-task', 'delete-category', 'clear-all']);
 
 const plantilla = document.createElement('template');
 plantilla.innerHTML = `

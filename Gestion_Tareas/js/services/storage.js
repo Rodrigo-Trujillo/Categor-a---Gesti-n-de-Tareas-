@@ -159,13 +159,13 @@ export function getCategories() {
     const raw = localStorage.getItem(CATEGORIES_KEY);
     if (!raw) return [];
     const data = JSON.parse(raw);
-    return Array.isArray(data) ? data.filter(esCategororiaValida) : [];
+    return Array.isArray(data) ? data.filter(esCategoriaValida) : [];
   } catch {
     return [];
   }
 }
 
-export function addCategory({ nombre }) {
+export function addCategory(nombre) {
   const categoria = { id: 'CAT-' + crypto.randomUUID(), nombre: nombre.trim() };
   persistCategories([...getCategories(), categoria]);
   return categoria;

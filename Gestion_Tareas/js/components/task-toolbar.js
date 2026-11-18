@@ -59,6 +59,7 @@ plantilla.innerHTML = `
     <div class="acciones" role="group" aria-label="Acciones">
       <button type="button" class="primario" data-evento="task:create-request">Nueva tarea</button>
       <button type="button" data-evento="import:open">Importar tareas</button>
+      <button type = "button" data-evento = "categories:open">Categorías</button>
       <button type="button" data-evento="tasks:complete-all" data-masivo>Marcar todas como terminadas</button>
       <button type="button" class="peligro" data-evento="tasks:clear-all" data-masivo>Vaciar lista</button>
     </div>

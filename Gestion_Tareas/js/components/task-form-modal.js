@@ -2,9 +2,10 @@
 // Modal con el formulario para crear o editar una tarea.
 //
 // API pública:  openCreate()  |  openEdit(task)
-// Emite:        task:save  { id?, titulo, descripcion, fechaRegistro (ISO), completado }
+// Emite:        task:save  { id?, titulo, descripcion, fechaRegistro (ISO), completado, categoriaId }
 //               (sin id = crear; con id = actualizar). Guardar en storage es de task-app.
 //
+// Las categorías disponibles se las pasa task-app con `modal.categories = [...]`.
 // El formulario solo existe visible mientras el modal está abierto.
 
 import './app-modal.js';
@@ -22,7 +23,7 @@ plantilla.innerHTML = `
 
     label { font-size: var(--texto-s, 0.875rem); font-weight: 600; }
 
-    input[type="text"], input[type="datetime-local"], textarea {
+    input[type="text"], input[type="datetime-local"], textarea, select {
       box-sizing: border-box;
       min-height: 44px;
       padding: 0 var(--espacio-3, 16px);
@@ -58,7 +59,7 @@ plantilla.innerHTML = `
       background: var(--color-primario, #2563eb);
       color: var(--color-primario-texto, #ffffff);
     }
-    :is(button, input, textarea):focus-visible {
+    :is(button, input, textarea, select):focus-visible {
       outline: 3px solid var(--color-foco, #1d4ed8);
       outline-offset: 2px;
     }
@@ -76,6 +77,13 @@ plantilla.innerHTML = `
         <label for="descripcion">Descripción (opcional, máximo 500 caracteres)</label>
         <textarea id="descripcion" rows="3"></textarea>
         <p class="error" id="error-descripcion" hidden></p>
+      </div>
+
+      <div class="campo">
+        <label for="categoria">Categoría</label>
+        <select id="categoria">
+          <option value="">Sin categoría</option>
+        </select>
       </div>
 
       <div class="campo">
@@ -115,6 +123,7 @@ export class TaskFormModal extends HTMLElement {
       descripcion: raiz.querySelector('#descripcion'),
       fecha: raiz.querySelector('#fecha'),
       completado: raiz.querySelector('#completado'),
+      categoria: raiz.querySelector('#categoria'),
     };
     this.#errores = {
       titulo: raiz.querySelector('#error-titulo'),
@@ -149,6 +158,21 @@ export class TaskFormModal extends HTMLElement {
     this.#modal.addEventListener('modal:close', () => this.#limpiar());
   }
 
+  // task-app asigna la lista cada vez que cambian las categorías.
+  set categories(lista) {
+    const categorias = Array.isArray(lista) ? lista : [];
+    const select = this.#campos.categoria;
+    const seleccionada = select.value; // se conserva la elección al repintar
+
+    // new Option(texto, valor) usa textContent: el nombre lo escribe el usuario.
+    select.replaceChildren(
+      new Option('Sin categoría', ''),
+      ...categorias.map((c) => new Option(c.nombre, c.id))
+    );
+    select.value = seleccionada;
+    if (select.selectedIndex === -1) select.selectedIndex = 0; // la elegida ya no existe
+  }
+
   openCreate() {
     this.#abrir({
       heading: 'Nueva tarea',
@@ -157,6 +181,7 @@ export class TaskFormModal extends HTMLElement {
       descripcion: '',
       fechaISO: new Date().toISOString(), // por defecto, ahora
       completado: false,
+      categoriaId: null,
     });
   }
 
@@ -173,10 +198,11 @@ export class TaskFormModal extends HTMLElement {
       descripcion: task.descripcion ?? '',
       fechaISO: task.fechaRegistro,
       completado: task.completado,
+      categoriaId: task.categoriaId ?? null,
     });
   }
 
-  #abrir({ heading, id, titulo, descripcion, fechaISO, completado }) {
+  #abrir({ heading, id, titulo, descripcion, fechaISO, completado, categoriaId }) {
     this.#limpiar();
     this.#id = id;
     this.#fechaOriginal = id ? fechaISO : null;
@@ -187,6 +213,8 @@ export class TaskFormModal extends HTMLElement {
     this.#campos.fecha.value = toDatetimeLocal(fechaISO);
     this.#campos.fecha.max = toDatetimeLocal(new Date().toISOString()); // el selector no deja elegir futuro
     this.#campos.completado.checked = completado;
+    this.#campos.categoria.value = categoriaId ?? '';
+    if (this.#campos.categoria.selectedIndex === -1) this.#campos.categoria.selectedIndex = 0;
 
     this.#modal.open();
     this.#campos.titulo.focus(); // open() deja el foco en la X; aquí queremos el primer campo
@@ -223,6 +251,7 @@ export class TaskFormModal extends HTMLElement {
       descripcion: descripcion.trim(),
       fechaRegistro: fechaISO,
       completado: this.#campos.completado.checked,
+      categoriaId: this.#campos.categoria.value || null, // '' = sin categoría
     };
     if (this.#id) detail.id = this.#id;
 
