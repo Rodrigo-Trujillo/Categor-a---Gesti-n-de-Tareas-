@@ -1,7 +1,8 @@
 const STORAGE_KEY = 'tasks:v1';
+const CATEGORIES_KEY = 'categories:v1';
 
 // Campos que cada tipo de tarea permite cambiar
-const CAMPOS_LOCAL = ['titulo', 'descripcion', 'fechaRegistro', 'completado'];
+const CAMPOS_LOCAL = ['titulo', 'descripcion', 'fechaRegistro', 'completado','categoriaId'];
 const CAMPOS_IMPORTADA = ['completado'];
 
 function esTareaValida(t) {
@@ -11,6 +12,7 @@ function esTareaValida(t) {
     typeof t.id === 'string' &&
     typeof t.titulo === 'string' &&
     // La descripción es opcional: las tareas guardadas antes de existir este campo siguen siendo válidas.
+    (t.categoriaId === undefined || t.categoriaId === null || typeof t.categoriaId === 'string') &&
     (t.descripcion === undefined || typeof t.descripcion === 'string') &&
     typeof t.fechaRegistro === 'string' &&
     typeof t.completado === 'boolean' &&
@@ -34,7 +36,11 @@ export function getTasks() {
     const data = JSON.parse(raw);
     // Se normaliza: toda tarea sale con `descripcion` (cadena vacía si no la tenía).
     return Array.isArray(data)
-      ? data.filter(esTareaValida).map((t) => ({ ...t, descripcion: t.descripcion ?? '' }))
+      ? data.filter(esTareaValida).map((t) => ({
+          ...t,
+          descripcion: t.descripcion ?? '',
+          categoriaId: t.categoriaId ?? null,
+        }))
       : [];
   } catch {
     return [];
@@ -50,11 +56,12 @@ export function saveTasks(tasks) {
   }
 }
 
-export function addTask({ titulo, descripcion = '', fechaRegistro, completado = false }) {
+export function addTask({ titulo, descripcion = '', fechaRegistro, completado = false, categoriaId = null }) {
   const tarea = {
     id: 'LOC-' + crypto.randomUUID(),
     titulo,
     descripcion,
+    categoriaId,
     fechaRegistro: fechaRegistro ?? new Date().toISOString(),
     completado,
     origen: 'local',
@@ -127,3 +134,65 @@ export function completeAllTasks() {
 export function clearTasks() {
   persist([]);
 }
+
+// Categorías
+
+function esCategoriaValida(c) {
+  return (
+    c !== null &&
+    typeof c === 'object' &&
+    typeof c.id === 'string' &&
+    typeof c.nombre === 'string'
+  );
+}
+
+function persistCategories(categorias) {
+  try {
+    localStorage.setItem(CATEGORIES_KEY, JSON.stringify(categorias));
+  } catch {
+    throw new Error('No se pudo guardar en el navegador (almacenamiento lleno o bloqueado).');
+  }
+}
+
+export function getCategories() {
+  try {
+    const raw = localStorage.getItem(CATEGORIES_KEY);
+    if (!raw) return [];
+    const data = JSON.parse(raw);
+    return Array.isArray(data) ? data.filter(esCategororiaValida) : [];
+  } catch {
+    return [];
+  }
+}
+
+export function addCategory({ nombre }) {
+  const categoria = { id: 'CAT-' + crypto.randomUUID(), nombre: nombre.trim() };
+  persistCategories([...getCategories(), categoria]);
+  return categoria;
+}
+
+export function updateCategory(id, nombre) {
+  const categorias = getCategories();
+  const indice = categorias.findIndex((c) => c.id === id);
+  if (indice === -1) return null;
+
+  const actualizada = { ...categorias[indice], nombre: nombre.trim() };
+  categorias[indice] = actualizada;
+  persistCategories(categorias);
+  return actualizada;
+}
+
+//Decisión: si se borra una categoría, las tareas que la tenían quedan con `categoriaId` nulo.
+export function removeCategory(id) {
+  const categorias = getCategories();
+  const restantes = categorias.filter((c) => c.id !== id);
+  if (restantes.length === categorias.length) return false;
+ 
+
+  const tareas = getTasks();
+  if (tareas.some((t) => t.categoriaId === id)) {
+    persist(tareas.map((t)=> t.categoriaId === id ? { ...t, categoriaId: null } : t));
+  }
+  persistCategories(restantes);
+  return true;
+} 
