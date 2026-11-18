@@ -81,6 +81,7 @@ export class TaskList extends HTMLElement {
 
   #tasks = [];
   #items = new Map(); // id de la tarea -> <li> que ya está dibujado
+  #nombresCategoria = new Map(); // id de la categoría -> nombre
   #refs;
 
   constructor() {
@@ -108,6 +109,13 @@ export class TaskList extends HTMLElement {
 
   set tasks(valor) {
     this.#tasks = Array.isArray(valor) ? valor : [];
+    this.#render();
+  }
+
+  // task-app asigna la lista de categorías (antes que las tareas) para poder mostrar el nombre.
+  set categories(lista) {
+    const categorias = Array.isArray(lista) ? lista : [];
+    this.#nombresCategoria = new Map(categorias.map((c) => [c.id, c.nombre]));
     this.#render();
   }
 
@@ -142,6 +150,7 @@ export class TaskList extends HTMLElement {
         li.append(document.createElement('task-item'));
         this.#items.set(tarea.id, li);
       }
+      li.firstElementChild.categoryName = this.#nombresCategoria.get(tarea.categoriaId) ?? '';
       li.firstElementChild.task = tarea;
       return li;
     });

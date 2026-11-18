@@ -107,7 +107,7 @@ export class TaskApp extends HTMLElement {
     alEvento('task:delete-request', ({ id }) => this.#pedirEliminar(id));
 
     alEvento('import:open', () => this.#abrirImportacion());
-    alEvento('import:confirm', ({ tasks }) => this.#importar(tasks));
+    alEvento('import:confirm', ({ tasks, categoriaId }) => this.#importar(tasks, categoriaId));
 
     alEvento('categories:open', () => this.#abrirCategorias());
     alEvento('category:save', (datos) => this.#guardarCategoria(datos));
@@ -139,12 +139,14 @@ export class TaskApp extends HTMLElement {
     const todas = getTasks();
     const visibles = filterTasks(todas, this.#status, this.#query);
 
+    const categorias = getCategories();
+    this.#refs.lista.categories = categorias; // antes que las tareas
     this.#refs.lista.tasks = visibles;
     this.#refs.lista.setAttribute('empty-reason', todas.length === 0 ? 'none' : 'no-results');
     this.#refs.barra.toggleAttribute('no-tasks', todas.length === 0);
-    const categorias = getCategories();
     this.#refs.categorias.categories = categorias;
     this.#refs.formulario.categories = categorias;
+    this.#refs.importar.categories = categorias;
   }
 
   // Ejecuta una acción de storage. Si falla (por ejemplo, almacenamiento lleno), avisa.
@@ -314,10 +316,11 @@ export class TaskApp extends HTMLElement {
     modal.open();
   }
 
-  #importar(borradores = []) {
+  #importar(borradores = [], categoriaId = null) {
     // Una sola fecha para todo el lote: el momento de confirmar la importación.
     const fechaRegistro = new Date().toISOString();
-    const tareas = borradores.map((borrador) => ({ ...borrador, fechaRegistro }));
+    // Todas las tareas del lote reciben la categoría elegida en el modal (null = sin categoría).
+    const tareas = borradores.map((borrador) => ({ ...borrador, fechaRegistro, categoriaId }));
 
     this.#intentar(() => {
       const { agregadas, omitidas } = addTasks(tareas);

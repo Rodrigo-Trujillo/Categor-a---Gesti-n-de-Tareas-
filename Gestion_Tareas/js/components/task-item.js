@@ -85,7 +85,7 @@ plantilla.innerHTML = `
         <input type="checkbox" />
         <span class="titulo"></span>
       </label>
-      <p class="meta"><time></time> · <span class="origen"></span></p>
+      <p class="meta"><time></time> · <span class="origen"></span><span class="categoria-wrap" hidden> · Categoría: <strong class="categoria"></strong></span></p>
     </div>
     <div class="acciones">
       <button type="button" class="editar">Editar</button>
@@ -96,6 +96,7 @@ plantilla.innerHTML = `
 
 export class TaskItem extends HTMLElement {
   #task = null;
+  #categoryName = ''; // nombre de la categoría de la tarea ('' = sin categoría)
   #refs;
 
   constructor() {
@@ -109,6 +110,8 @@ export class TaskItem extends HTMLElement {
       titulo: raiz.querySelector('.titulo'),
       fecha: raiz.querySelector('time'),
       origen: raiz.querySelector('.origen'),
+      categoriaWrap: raiz.querySelector('.categoria-wrap'),
+      categoria: raiz.querySelector('.categoria'),
       editar: raiz.querySelector('.editar'),
       eliminar: raiz.querySelector('.eliminar'),
     };
@@ -139,6 +142,12 @@ export class TaskItem extends HTMLElement {
     this.#render();
   }
 
+  // task-list le pasa el nombre ya resuelto: así task-item no necesita conocer las categorías.
+  set categoryName(valor) {
+    this.#categoryName = valor ?? '';
+    this.#render();
+  }
+
   #emitir(nombre, detail) {
     this.dispatchEvent(
       new CustomEvent(nombre, { detail, bubbles: true, composed: true })
@@ -157,6 +166,8 @@ export class TaskItem extends HTMLElement {
     this.#refs.fecha.textContent = formatDate(t.fechaRegistro);
     this.#refs.fecha.dateTime = t.fechaRegistro;
     this.#refs.origen.textContent = t.origen === 'api' ? 'API' : 'Local';
+    this.#refs.categoria.textContent = this.#categoryName;
+    this.#refs.categoriaWrap.hidden = !this.#categoryName;
 
     // Las tareas importadas no se editan, solo se eliminan
     this.#refs.editar.hidden = t.imported;
